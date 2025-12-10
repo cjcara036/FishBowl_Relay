@@ -64,5 +64,5 @@ This object is stringified and compressed using LZString.compressToEncodedURICom
 ## Legacy Support
 The application includes a fallback mechanism. It attempts to decompress the hash first. If that fails, it attempts to parse standard Base64 (legacy links). This ensures backward compatibility if link formats change.
 
-##📜 License
+## 📜 License
 This project is open source. Feel free to fork and modify!
