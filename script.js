@@ -10,34 +10,47 @@ window.addEventListener('load', () => {
     inputName.addEventListener("keypress", handleEnterKey);
     inputCount.addEventListener("keypress", handleEnterKey);
 
+    // 1. Get the Hash (Ignore query params like ?fbclid=...)
     const hash = window.location.hash.substring(1); 
+    
     if (hash) {
+        let parsedData = null;
+
+        // STRATEGY A: Try LZString Compression (New Format)
         try {
-            let jsonStr = null;
-
-            // 1. Try Decompressing (New Format)
             const decompressed = LZString.decompressFromEncodedURIComponent(hash);
-            
             if (decompressed) {
-                jsonStr = decompressed;
-                console.log("Loaded compressed link.");
-            } else {
-                // 2. Fallback: Try standard Base64 (Old Format)
-                // If this fails, it throws an error which goes to catch block
-                jsonStr = atob(hash);
-                console.log("Loaded legacy Base64 link.");
+                // Critical Check: Is the result actually valid JSON?
+                parsedData = JSON.parse(decompressed);
+                console.log("Loaded via Compression Strategy");
             }
-
-            if (!jsonStr) throw new Error("Empty data");
-
-            currentState = JSON.parse(jsonStr);
-            startBowlMode();
-
         } catch (e) {
-            console.error("Link parsing failed:", e);
+            console.log("Compression strategy failed, trying Legacy...");
+        }
+
+        // STRATEGY B: Try Standard Base64 (Old Format / Legacy)
+        if (!parsedData) {
+            try {
+                // sanitize: decode URI components first (e.g. %3D becomes =)
+                const cleanHash = decodeURIComponent(hash);
+                const decoded = atob(cleanHash);
+                parsedData = JSON.parse(decoded);
+                console.log("Loaded via Legacy Base64 Strategy");
+            } catch (e) {
+                console.error("Legacy strategy failed", e);
+            }
+        }
+
+        // FINAL RESULT
+        if (parsedData) {
+            currentState = parsedData;
+            startBowlMode();
+        } else {
             alert("This link seems broken or invalid. Sending you to setup.");
+            console.error("All parsing strategies failed.");
             viewSetup.classList.add('active');
         }
+
     } else {
         viewSetup.classList.add('active');
         inputName.focus();
@@ -172,7 +185,7 @@ function drawItem() {
 
 function generateCurrentLink() {
     const jsonStr = JSON.stringify(currentState);
-    // ALWAYS compress new links
+    // ALWAYS compress new links to save space
     const compressed = LZString.compressToEncodedURIComponent(jsonStr);
     return `${window.location.origin}${window.location.pathname}#${compressed}`;
 }
