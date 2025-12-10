@@ -6,15 +6,16 @@ const viewAdmin = document.getElementById('view-admin');
 const inputName = document.getElementById('setup-item-name');
 const inputCount = document.getElementById('setup-item-count');
 
-/* STATE: { items: [], p: "hashed_password" } */
+/* STATE: { items: [], p: "hashed_password" (or null) } */
 let currentState = { items: [], p: null };
 
 // --- INITIALIZATION ---
 window.addEventListener('load', () => {
+    // Setup View Listeners
     inputName.addEventListener("keypress", handleEnterKey);
     inputCount.addEventListener("keypress", handleEnterKey);
     
-    // Admin Input Listener
+    // Admin View Listener
     const adminInput = document.getElementById('admin-item-name');
     if(adminInput) {
         adminInput.addEventListener("keypress", (e) => {
@@ -22,6 +23,7 @@ window.addEventListener('load', () => {
         });
     }
 
+    // Parse URL Hash
     const hash = window.location.hash.substring(1); 
     
     if (hash) {
@@ -34,13 +36,14 @@ window.addEventListener('load', () => {
 
 function loadStateFromHash(hash) {
     let parsedData = null;
-    // 1. Try Compression
+    
+    // 1. Try Compression Strategy (New Links)
     try {
         const decompressed = LZString.decompressFromEncodedURIComponent(hash);
         if (decompressed) parsedData = JSON.parse(decompressed);
     } catch (e) { console.log("Decompress failed, trying legacy..."); }
 
-    // 2. Try Legacy (Base64)
+    // 2. Try Legacy Strategy (Base64)
     if (!parsedData) {
         try {
             const cleanHash = decodeURIComponent(hash);
@@ -72,10 +75,14 @@ function addItemToSetup() {
 
     if (name) {
         for(let i=0; i<count; i++) currentState.items.push({ n: name, d: null });
+        
         const li = document.createElement('li');
         li.innerHTML = `<span>${name}</span> <span>x${count}</span>`;
         document.getElementById('setup-list').appendChild(li);
-        inputName.value = ''; inputCount.value = 1; inputName.focus();
+        
+        inputName.value = ''; 
+        inputCount.value = 1; 
+        inputName.focus();
     }
 }
 
@@ -105,10 +112,9 @@ function startBowlMode() {
     viewSetup.classList.remove('active');
     viewBowl.classList.add('active');
     
-    // Show Admin Button if password exists
-    if (currentState.p) {
-        document.getElementById('btn-admin-login').classList.remove('hidden');
-    }
+    // Always show the admin button. 
+    // Logic inside promptAdminLogin() handles whether it is locked or public.
+    document.getElementById('btn-admin-login').classList.remove('hidden');
     
     // Default to "Draw" mode logic
     showCard('draw-card');
@@ -150,8 +156,7 @@ function renderBulletinBoard() {
     document.getElementById('items-remaining-count').textContent = remaining;
 
     // AUTO-SWITCH Logic
-    // If we are currently looking at the Result Card (e.g. just drew), DO NOT switch view.
-    // Only switch if we are NOT in result mode.
+    // Only switch views if we are NOT currently looking at the Result Card (e.g. just drew).
     const resultCard = document.getElementById('result-card');
     if (resultCard.classList.contains('hidden')) {
         if(remaining === 0) {
@@ -178,19 +183,20 @@ function drawItem() {
     const rand = Math.floor(Math.random() * availableIndices.length);
     const pickedIndex = availableIndices[rand];
     
+    // Update State
     currentState.items[pickedIndex].d = userName;
     
     // 1. UPDATE UI TEXT
     document.getElementById('result-text').textContent = currentState.items[pickedIndex].n;
 
-    // 2. FORCE SHOW RESULT CARD
-    // This hides Draw and Game Over cards immediately
+    // 2. FORCE SHOW RESULT CARD (Hides others)
     showCard('result-card');
     
-    // Clear QR
+    // Clear QR if it was open
     const qrContainer = document.getElementById('qr-result-container');
     if(qrContainer) { qrContainer.innerHTML = ''; qrContainer.classList.add('hidden'); }
 
+    // 3. Update Instruction based on remaining
     const remaining = availableIndices.length - 1;
     const instructionEl = document.getElementById('result-instruction');
     if (remaining === 0) instructionEl.innerHTML = "<strong>BOWL EMPTY!</strong> Share Final Tally:";
@@ -198,12 +204,17 @@ function drawItem() {
     
     document.getElementById('next-link-input').value = generateCurrentLink();
     
-    // 3. Update Board Background
+    // 4. Update Board Background
     renderBulletinBoard();
 }
 
 // --- ADMIN LOGIC ---
 async function promptAdminLogin() {
+    // If no password set, go straight to edit (Public Mode)
+    if (!currentState.p) {
+        return openAdminView();
+    }
+
     const input = prompt("Enter Admin Password to Edit Bowl:");
     if (!input) return;
 
@@ -286,10 +297,10 @@ function exitAdmin() {
     viewAdmin.classList.remove('active');
     viewBowl.classList.add('active');
     
-    // Reset cards to default state based on remaining items
+    // Reset cards to default state
     showCard('draw-card'); 
     
-    // Let logic decide true state
+    // Let logic decide true state (if empty, it will switch to game over)
     renderBulletinBoard();
 }
 
@@ -302,7 +313,9 @@ function generateCurrentLink() {
 
 function copyLink(elementId) {
     const input = document.getElementById(elementId);
-    input.select(); navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
+    input.select(); 
+    input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value).then(() => alert("Copied!"));
 }
 
 function nativeShare(elementId) {
