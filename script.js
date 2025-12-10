@@ -11,17 +11,45 @@ window.addEventListener('load', () => {
     inputCount.addEventListener("keypress", handleEnterKey);
 
     const hash = window.location.hash.substring(1); 
+    
     if (hash) {
+        let parsedData = null;
+
+        // STRATEGY A: Try LZString Compression (New Format)
         try {
-            const jsonStr = LZString.decompressFromEncodedURIComponent(hash);
-            if (!jsonStr) throw new Error("Decompression failed");
-            currentState = JSON.parse(jsonStr);
-            startBowlMode();
+            const decompressed = LZString.decompressFromEncodedURIComponent(hash);
+            if (decompressed) {
+                parsedData = JSON.parse(decompressed);
+                console.log("Loaded via Compression Strategy");
+            }
         } catch (e) {
-            console.error(e);
-            alert("Invalid link. Sending you to setup.");
+            console.log("Compression strategy failed, trying Legacy...");
+        }
+
+        // STRATEGY B: Try Standard Base64 (Legacy Format)
+        // This is what your specific link needs
+        if (!parsedData) {
+            try {
+                // sanitize: decode URI components first (e.g. %3D becomes =)
+                const cleanHash = decodeURIComponent(hash);
+                const decoded = atob(cleanHash);
+                parsedData = JSON.parse(decoded);
+                console.log("Loaded via Legacy Base64 Strategy");
+            } catch (e) {
+                console.error("Legacy strategy failed", e);
+            }
+        }
+
+        // FINAL RESULT CHECK
+        if (parsedData) {
+            currentState = parsedData;
+            startBowlMode();
+        } else {
+            console.error("All parsing strategies failed.");
+            alert("This link seems broken or invalid. Sending you to setup.");
             viewSetup.classList.add('active');
         }
+
     } else {
         viewSetup.classList.add('active');
         inputName.focus();
@@ -131,8 +159,11 @@ function drawItem() {
     const drawCard = document.getElementById('draw-card');
     
     // Hide QR code from previous turn if open
-    document.getElementById('qr-result-container').innerHTML = ''; 
-    document.getElementById('qr-result-container').classList.add('hidden');
+    const qrContainer = document.getElementById('qr-result-container');
+    if(qrContainer) {
+        qrContainer.innerHTML = ''; 
+        qrContainer.classList.add('hidden');
+    }
 
     drawCard.classList.add('hidden');
     resultCard.classList.remove('hidden');
@@ -145,7 +176,7 @@ function drawItem() {
     if (remainingAfterDraw === 0) {
         instructionEl.innerHTML = "<strong>BOWL EMPTY!</strong> Share this Final Tally link:";
     } else {
-        instructionEl.innerHTML = "<strong>IMPORTANT:</strong> Copy this NEW link for the next person:";
+        instructionEl.innerHTML = "<strong>IMPORTANT:</strong> Share this NEW link:";
     }
     
     // 4. GENERATE LINK
