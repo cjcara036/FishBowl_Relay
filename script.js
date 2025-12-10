@@ -1,69 +1,68 @@
-/* STATE STRUCTURE:
-  {
-    items: [
-      { n: "Item Name", d: "User Name (or null)" },
-      ...
-    ]
-  }
-*/
-
 const viewSetup = document.getElementById('view-setup');
 const viewBowl = document.getElementById('view-bowl');
+const inputName = document.getElementById('setup-item-name');
+const inputCount = document.getElementById('setup-item-count');
 
 let currentState = { items: [] };
 
 // --- INITIALIZATION ---
 window.addEventListener('load', () => {
-    const hash = window.location.hash.substring(1); // Remove '#'
+    inputName.addEventListener("keypress", handleEnterKey);
+    inputCount.addEventListener("keypress", handleEnterKey);
 
+    const hash = window.location.hash.substring(1); 
     if (hash) {
         try {
-            // Decode Base64 -> JSON string -> Object
-            const jsonStr = atob(hash);
+            const jsonStr = LZString.decompressFromEncodedURIComponent(hash);
+            if (!jsonStr) throw new Error("Decompression failed");
             currentState = JSON.parse(jsonStr);
             startBowlMode();
         } catch (e) {
-            console.error("Invalid URL data", e);
-            alert("This link seems broken. Sending you to setup.");
+            console.error(e);
+            alert("Invalid link. Sending you to setup.");
             viewSetup.classList.add('active');
         }
     } else {
         viewSetup.classList.add('active');
+        inputName.focus();
     }
 });
 
-// --- SETUP MODE ---
-function addItemToSetup() {
-    const nameInput = document.getElementById('setup-item-name');
-    const countInput = document.getElementById('setup-item-count');
-    const name = nameInput.value.trim();
-    const count = parseInt(countInput.value);
+function handleEnterKey(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        addItemToSetup();
+    }
+}
 
-    if (name && count > 0) {
-        for(let i=0; i<count; i++) {
-            // n = name, d = drawnBy (minimized keys for shorter URLs)
-            currentState.items.push({ n: name, d: null });
-        }
+// --- SETUP ---
+function addItemToSetup() {
+    const name = inputName.value.trim();
+    let count = parseInt(inputCount.value);
+    if (isNaN(count) || count < 1) count = 1;
+
+    if (name) {
+        for(let i=0; i<count; i++) currentState.items.push({ n: name, d: null });
         
-        // UI Update
         const li = document.createElement('li');
         li.innerHTML = `<span>${name}</span> <span>x${count}</span>`;
         document.getElementById('setup-list').appendChild(li);
         
-        nameInput.value = '';
+        inputName.value = '';
+        inputCount.value = 1; 
+        inputName.focus();
     }
 }
 
 function generateInitialLink() {
     if(currentState.items.length === 0) return alert("Bowl is empty!");
-    
-    // Shuffle items initially so they aren't in order of entry
     shuffleArray(currentState.items);
     
-    updateUrlAndShowResult("Bowl created!", false);
+    const url = generateCurrentLink();
+    prompt("Copy this link and send it to the first player:", url);
 }
 
-// --- BOWL MODE ---
+// --- GAME LOGIC ---
 function startBowlMode() {
     viewSetup.classList.remove('active');
     viewBowl.classList.add('active');
@@ -77,12 +76,11 @@ function renderBulletinBoard() {
     
     let remaining = 0;
     
-    // items have { n: name, d: drawnBy }
     currentState.items.forEach(item => {
         if (item.d) {
             const div = document.createElement('div');
             div.className = 'bulletin-item';
-            div.innerHTML = `<strong>${item.d}</strong><br>drew ${item.n}`;
+            div.innerHTML = `<strong>${item.d}</strong> drew ${item.n}`;
             board.appendChild(div);
         } else {
             remaining++;
@@ -91,18 +89,32 @@ function renderBulletinBoard() {
     
     remainingCountEl.textContent = remaining;
 
-    if(remaining === 0) {
-        document.getElementById('draw-card').innerHTML = "<h3>The Bowl is Empty!</h3>";
+    // UI VISIBILITY LOGIC
+    const drawCard = document.getElementById('draw-card');
+    const gameOverCard = document.getElementById('game-over-card');
+    const resultCard = document.getElementById('result-card');
+
+    // Only make decisions about Game Over/Draw cards if the Result card is NOT active.
+    // This prevents the Game Over card from flashing underneath the result card on the last draw.
+    if (resultCard.classList.contains('hidden')) {
+        if(remaining === 0) {
+            drawCard.classList.add('hidden');
+            gameOverCard.classList.remove('hidden');
+            
+            // Generate final link for the Game Over card
+            document.getElementById('final-link-input').value = generateCurrentLink();
+        } else {
+            drawCard.classList.remove('hidden');
+            gameOverCard.classList.add('hidden');
+        }
     }
 }
 
 function drawItem() {
     const nameInput = document.getElementById('player-name');
     const userName = nameInput.value.trim();
-    
     if (!userName) return alert("Please enter your name.");
 
-    // Find undrawn items
     const availableIndices = [];
     currentState.items.forEach((item, index) => {
         if(item.d === null) availableIndices.push(index);
@@ -110,47 +122,67 @@ function drawItem() {
 
     if (availableIndices.length === 0) return alert("Bowl is empty.");
 
-    // Random Pick
     const rand = Math.floor(Math.random() * availableIndices.length);
     const pickedIndex = availableIndices[rand];
     
-    // UPDATE STATE
+    // 1. UPDATE STATE
     currentState.items[pickedIndex].d = userName;
     
-    // Update UI
-    renderBulletinBoard();
+    // 2. SHOW RESULT CARD *BEFORE* RENDERING BOARD
+    // This ensures renderBulletinBoard sees the result card is active and doesn't trigger "Game Over"
+    const resultCard = document.getElementById('result-card');
+    const drawCard = document.getElementById('draw-card');
     
-    // Hide Draw Card, Show Result Card
-    document.getElementById('draw-card').classList.add('hidden');
-    document.getElementById('result-card').classList.remove('hidden');
+    drawCard.classList.add('hidden');
+    resultCard.classList.remove('hidden');
     document.getElementById('result-text').textContent = currentState.items[pickedIndex].n;
-    
-    // Generate NEW Link
-    updateUrlAndShowResult();
-}
 
-// --- UTILS ---
-function updateUrlAndShowResult(msg = null, isDraw = true) {
-    // Encode State -> JSON -> Base64
-    const jsonStr = JSON.stringify(currentState);
-    const hash = btoa(jsonStr);
+    // 3. CHECK FOR FINAL DRAW
+    // If this was the last item, update text to "Final Tally" instead of "Next Person"
+    const remainingAfterDraw = availableIndices.length - 1;
+    const instructionEl = document.getElementById('result-instruction');
     
-    const fullUrl = `${window.location.origin}${window.location.pathname}#${hash}`;
-    
-    if (isDraw) {
-        // Just populate the input box
-        document.getElementById('next-link-input').value = fullUrl;
+    if (remainingAfterDraw === 0) {
+        instructionEl.innerHTML = "<strong>BOWL EMPTY!</strong> Share this Final Tally link:";
     } else {
-        // For initial setup, we might want to just prompt them
-        prompt("Copy this link and send it to the first player:", fullUrl);
+        instructionEl.innerHTML = "<strong>IMPORTANT:</strong> Copy this NEW link for the next person:";
     }
+    
+    // 4. GENERATE LINK
+    document.getElementById('next-link-input').value = generateCurrentLink();
+
+    // 5. UPDATE BACKGROUND BOARD
+    renderBulletinBoard();
 }
 
-function copyNextLink() {
-    const input = document.getElementById('next-link-input');
+// --- UTILITIES ---
+
+function generateCurrentLink() {
+    const jsonStr = JSON.stringify(currentState);
+    const compressed = LZString.compressToEncodedURIComponent(jsonStr);
+    return `${window.location.origin}${window.location.pathname}#${compressed}`;
+}
+
+function copyLink(elementId) {
+    const input = document.getElementById(elementId);
     input.select();
-    navigator.clipboard.writeText(input.value);
-    alert("Link copied! Send this to the next person.");
+    input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value).then(() => {
+        alert("Link copied!");
+    });
+}
+
+function nativeShare(elementId) {
+    const url = document.getElementById(elementId).value;
+    if (navigator.share) {
+        navigator.share({
+            title: 'Fishbowl Relay',
+            text: 'Here is the Fishbowl link!',
+            url: url
+        }).catch((error) => console.log('Sharing failed', error));
+    } else {
+        copyLink(elementId);
+    }
 }
 
 function shuffleArray(array) {
