@@ -11,20 +11,22 @@ A serverless, static web application that simulates a "Fishbowl" random drawing 
 * **Smart Compression:** Uses `LZ-String` to compress game data, allowing for larger bowls in shorter URLs.
 * **Material 3 Design:** Vibrant "Party Mode" UI with high-contrast accessibility (Deep Purple, Neon Green, Amber).
 * **Bulletin Board:** Real-time history log showing who drew what.
-* **Mobile Friendly:** Integrated Native Share Sheet support for easy link passing.
+* **Hybrid Play:** Supports both **Remote** (Link Sharing) and **In-Person** (QR Code) play styles.
 * **Final Tally:** Automatically generates a read-only scoreboard link when the bowl is empty.
 
 ## 🕹️ How to Play (The Relay System)
 
-Because there is no central server, this game works like a digital relay race:
+Because there is no central server, this game works like a digital relay race. The "State" must be physically passed from player to player.
 
 1.  **Setup:** The **Host** adds items to the bowl (supports bulk entry via quantity) and clicks **"Start Chain"**.
 2.  **Share:** The Host sends the generated link to **Player 1**.
 3.  **Draw:** Player 1 opens the link, enters their name, and draws an item.
-4.  **Pass:** The app generates a **NEW** link (containing Player 1's result). Player 1 must send this *updated* link to **Player 2**.
+4.  **Pass:** The app updates the state and offers two ways to pass the turn:
+    * **Remote:** Copy the **NEW** link (or use Native Share) and send it to Player 2.
+    * **In-Person:** Click the **QR Code** button and let Player 2 scan your screen.
 5.  **Repeat:** Player 2 opens the link, sees the history on the Bulletin Board, draws their item, and passes the *next* link to Player 3.
 
-> **⚠️ CRITICAL RULE:** You must always send the **NEW** link generated after your turn. If you share an old link, the next player will not see the previous draws.
+> **⚠️ CRITICAL RULE:** You must always send the **NEW** link (or scan the new QR code) generated after your turn. If you use an old link, the next player will not see the previous draws.
 
 ## 🛠️ Installation & Deployment
 
@@ -40,14 +42,18 @@ This project is designed to be hosted for free on **GitHub Pages**.
 
 ## 📂 Project Structure
 
-* **`index.html`**: Main application structure. Imports Material Symbols and the `lz-string` library via CDN.
+* **`index.html`**: Main application structure. Imports Material Symbols and libraries via CDN.
 * **`style.css`**: Custom CSS implementing Material 3 tokens.
     * *Primary Theme:* Deep Purple (`#6200EE`)
     * *Success/Result:* High-Contrast Neon Green (`#00E676` bg / `#00210B` text)
     * *Game Over:* Bright Amber (`#FFC400`)
-* **`script.js`**: Handles game logic, state management, LZ-compression, and DOM updates.
+* **`script.js`**: Handles game logic, state management, LZ-compression, QR generation, and DOM updates.
 
 ## 🧠 Technical Details
+
+### Dependencies (via CDN)
+* **LZ-String:** Used to compress the JSON state object into the URL hash to avoid character limits.
+* **QRCode.js:** Generates the client-side QR codes for offline/in-person handoffs.
 
 ### The "Nonce" (State Storage)
 Instead of a database ID, the URL hash contains the full JSON state object:
