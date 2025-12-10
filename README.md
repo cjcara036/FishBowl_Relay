@@ -4,7 +4,11 @@ A serverless, static web application that simulates a "Fishbowl" random drawing 
 
 **No backend database required.** Hosted entirely on GitHub Pages.
 
-## 🚀 Features
+## 🚀 Live Demo
+**Click here to start a new game:**
+👉 **[https://cjcara036.github.io/FishBowl_Relay/](https://cjcara036.github.io/FishBowl_Relay/)**
+
+## 🌟 Features
 
 * **Zero Backend:** Runs 100% in the client browser using HTML, CSS, and JS.
 * **State-in-URL:** The game database lives in the shareable link.
@@ -18,7 +22,7 @@ A serverless, static web application that simulates a "Fishbowl" random drawing 
 
 Because there is no central server, this game works like a digital relay race. The "State" must be physically passed from player to player.
 
-1.  **Setup:** The **Host** adds items to the bowl (supports bulk entry via quantity) and clicks **"Start Chain"**.
+1.  **Setup:** The **Host** clicks the [Live Link](https://cjcara036.github.io/FishBowl_Relay/), adds items to the bowl (supports bulk entry via quantity), and clicks **"Start Chain"**.
 2.  **Share:** The Host sends the generated link to **Player 1**.
 3.  **Draw:** Player 1 opens the link, enters their name, and draws an item.
 4.  **Pass:** The app updates the state and offers two ways to pass the turn:
@@ -38,7 +42,7 @@ This project is designed to be hosted for free on **GitHub Pages**.
     * Go to **Settings** > **Pages**.
     * Under **Source**, select `Deploy from a branch`.
     * Select `main` (or `master`) and click **Save**.
-4.  **Play:** GitHub will provide a live URL (e.g., `https://yourname.github.io/repo-name/`).
+4.  **Play:** GitHub will provide a live URL similar to the one above.
 
 ## 📂 Project Structure
 
@@ -65,7 +69,7 @@ Instead of a database ID, the URL hash contains the full JSON state object:
   ]
 }
 ```
-This object is stringified and compressed using LZString.compressToEncodedURIComponent.
+his object is stringified and compressed using LZString.compressToEncodedURIComponent.
 
 ## Legacy Support
 The application includes a fallback mechanism. It attempts to decompress the hash first. If that fails, it attempts to parse standard Base64 (legacy links). This ensures backward compatibility if link formats change.
