@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fishbowl (Pass-the-Parcel)</title>
+    <title>Fishbowl Relay</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,11 +22,11 @@
         <main id="view-setup" class="view">
             <div class="m3-card">
                 <h2>Create New Bowl</h2>
-                <p class="m3-text-body">Add items. You will get a link to start the chain.</p>
+                <p>Add items. Press <strong>Enter</strong> to add quickly.</p>
                 
                 <div class="input-group">
                     <div class="m3-text-field">
-                        <input type="text" id="setup-item-name" placeholder=" " />
+                        <input type="text" id="setup-item-name" placeholder=" " autocomplete="off"/>
                         <label>Entry Name</label>
                     </div>
                     <div class="m3-text-field small">
@@ -68,19 +71,40 @@
                 <span class="material-symbols-outlined icon-large">check_circle</span>
                 <p class="m3-text-label">You drew:</p>
                 <h1 id="result-text">---</h1>
-                
                 <div class="m3-divider"></div>
                 
-                <p style="font-size: 0.9rem;">
-                    <strong>IMPORTANT:</strong> The bowl has updated. You must copy the NEW link below and send it to the next person.
+                <p id="result-instruction" style="font-size: 0.9rem;">
+                    <strong>IMPORTANT:</strong> Copy this NEW link for the next person:
                 </p>
                 
                 <div class="url-box">
                     <input type="text" id="next-link-input" readonly>
-                    <button class="m3-btn-icon" onclick="copyNextLink()">
+                    <button class="m3-btn-icon" onclick="copyLink('next-link-input')">
                         <span class="material-symbols-outlined">content_copy</span>
                     </button>
+                    <button class="m3-btn-icon" onclick="nativeShare('next-link-input')">
+                        <span class="material-symbols-outlined">share</span>
+                    </button>
                 </div>
+            </div>
+
+            <div id="game-over-card" class="m3-card game-over hidden">
+                <span class="material-symbols-outlined icon-large">emoji_events</span>
+                <h2>All Done!</h2>
+                <p>The bowl is empty.</p>
+                <div class="m3-divider"></div>
+                <p style="font-size: 0.9rem; font-weight: 600;">Share the Final Tally:</p>
+                <div class="url-box">
+                    <input type="text" id="final-link-input" readonly>
+                    <button class="m3-btn-icon" onclick="copyLink('final-link-input')">
+                        <span class="material-symbols-outlined">content_copy</span>
+                    </button>
+                    <button class="m3-btn-icon" onclick="nativeShare('final-link-input')">
+                        <span class="material-symbols-outlined">share</span>
+                    </button>
+                </div>
+                <br>
+                <button class="m3-btn-text" onclick="window.location.href = window.location.pathname">Start New Game</button>
             </div>
 
         </main>
