@@ -19,12 +19,15 @@
         
         <header class="m3-top-app-bar">
             <h1>Fishbowl Relay</h1>
+            <button id="btn-admin-login" class="m3-btn-icon header-action hidden" onclick="promptAdminLogin()" title="Edit Bowl">
+                <span class="material-symbols-outlined">edit</span>
+            </button>
         </header>
 
         <main id="view-setup" class="view">
             <div class="m3-card">
                 <h2>Create New Bowl</h2>
-                <p>Add items. Press <strong>Enter</strong> to add quickly.</p>
+                <p>Add items and set a password to edit later.</p>
                 
                 <div class="input-group">
                     <div class="m3-text-field">
@@ -41,6 +44,16 @@
                 </div>
 
                 <ul id="setup-list" class="m3-list"></ul>
+
+                <div class="m3-text-field">
+                    <input type="password" id="setup-password" placeholder=" " />
+                    <label>Admin Password (Optional)</label>
+                </div>
+                <div class="m3-text-field">
+                    <input type="password" id="setup-password-confirm" placeholder=" " />
+                    <label>Confirm Password</label>
+                </div>
+
                 <button class="m3-btn-filled" onclick="generateInitialLink()">Start Chain</button>
             </div>
         </main>
@@ -83,13 +96,13 @@
 
                 <div class="url-box">
                     <input type="text" id="next-link-input" readonly>
-                    <button class="m3-btn-icon" onclick="copyLink('next-link-input')" title="Copy Link">
+                    <button class="m3-btn-icon" onclick="copyLink('next-link-input')">
                         <span class="material-symbols-outlined">content_copy</span>
                     </button>
-                    <button class="m3-btn-icon" onclick="nativeShare('next-link-input')" title="Share">
+                    <button class="m3-btn-icon" onclick="nativeShare('next-link-input')">
                         <span class="material-symbols-outlined">share</span>
                     </button>
-                    <button class="m3-btn-icon" onclick="toggleQR('next-link-input', 'qr-result-container')" title="Show QR Code">
+                    <button class="m3-btn-icon" onclick="toggleQR('next-link-input', 'qr-result-container')">
                         <span class="material-symbols-outlined">qr_code_2</span>
                     </button>
                 </div>
@@ -106,21 +119,74 @@
 
                 <div class="url-box">
                     <input type="text" id="final-link-input" readonly>
-                    <button class="m3-btn-icon" onclick="copyLink('final-link-input')" title="Copy Link">
+                    <button class="m3-btn-icon" onclick="copyLink('final-link-input')">
                         <span class="material-symbols-outlined">content_copy</span>
                     </button>
-                    <button class="m3-btn-icon" onclick="nativeShare('final-link-input')" title="Share">
+                    <button class="m3-btn-icon" onclick="nativeShare('final-link-input')">
                         <span class="material-symbols-outlined">share</span>
                     </button>
-                    <button class="m3-btn-icon" onclick="toggleQR('final-link-input', 'qr-final-container')" title="Show QR Code">
+                    <button class="m3-btn-icon" onclick="toggleQR('final-link-input', 'qr-final-container')">
                         <span class="material-symbols-outlined">qr_code_2</span>
                     </button>
                 </div>
                 <br>
                 <button class="m3-btn-text" onclick="window.location.href = window.location.pathname">Start New Game</button>
             </div>
-
         </main>
+
+        <main id="view-admin" class="view">
+            
+            <div id="admin-edit-panel" class="m3-card">
+                <h2>Edit Bowl Content</h2>
+                <p>Remove undrawn items or add new ones.</p>
+
+                <div class="input-group">
+                    <div class="m3-text-field">
+                        <input type="text" id="admin-item-name" placeholder=" " autocomplete="off"/>
+                        <label>New Item Name</label>
+                    </div>
+                    <button class="m3-btn-icon" onclick="adminAddItem()">
+                        <span class="material-symbols-outlined">add_circle</span>
+                    </button>
+                </div>
+
+                <div class="m3-divider"></div>
+                <h3>Remaining Items</h3>
+                <ul id="admin-list" class="m3-list"></ul>
+
+                <button class="m3-btn-filled" onclick="saveAdminChanges()">Save Changes</button>
+                <button class="m3-btn-text" onclick="cancelAdmin()">Cancel</button>
+            </div>
+
+            <div id="admin-share-card" class="m3-card primary hidden">
+                <span class="material-symbols-outlined icon-large">save_as</span>
+                <p class="m3-text-label">Changes Saved!</p>
+                <h2>Bowl Updated</h2>
+                <div class="m3-divider"></div>
+                
+                <p style="font-size: 0.9rem;">
+                    <strong>IMPORTANT:</strong> You must share this NEW link for changes to take effect.
+                </p>
+
+                <div id="qr-admin-container" class="qr-box hidden"></div>
+
+                <div class="url-box">
+                    <input type="text" id="admin-link-input" readonly>
+                    <button class="m3-btn-icon" onclick="copyLink('admin-link-input')">
+                        <span class="material-symbols-outlined">content_copy</span>
+                    </button>
+                    <button class="m3-btn-icon" onclick="nativeShare('admin-link-input')">
+                        <span class="material-symbols-outlined">share</span>
+                    </button>
+                    <button class="m3-btn-icon" onclick="toggleQR('admin-link-input', 'qr-admin-container')">
+                        <span class="material-symbols-outlined">qr_code_2</span>
+                    </button>
+                </div>
+                <br>
+                <button class="m3-btn-text" onclick="exitAdmin()">Done / Return to Game</button>
+            </div>
+        </main>
+
     </div>
 
     <script src="script.js"></script>
