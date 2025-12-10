@@ -1,6 +1,6 @@
 :root {
     /* Palette */
-    --md-sys-color-primary: #6200EE; /* Deep Purple */
+    --md-sys-color-primary: #6200EE;
     --md-sys-color-on-primary: #FFFFFF;
     
     /* Result Colors (High Contrast) */
@@ -54,7 +54,7 @@ h3 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacin
     box-shadow: var(--shadow-float);
 }
 
-/* Standard Cards */
+/* Cards */
 .m3-card {
     background: var(--md-sys-color-surface);
     border-radius: 12px;
@@ -62,7 +62,6 @@ h3 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacin
     margin-bottom: 16px;
     box-shadow: var(--shadow-card);
 }
-
 .m3-card.outlined { 
     box-shadow: none; 
     border: 1px solid var(--md-sys-color-outline); 
@@ -94,7 +93,7 @@ h3 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacin
     background: rgba(255,255,255,0.2);
 }
 
-/* Inputs */
+/* Form Elements */
 .input-group { display: flex; gap: 8px; align-items: center; margin-bottom: 20px; }
 
 .m3-text-field {
@@ -117,7 +116,6 @@ h3 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacin
 }
 .m3-text-field:focus-within label { color: var(--md-sys-color-primary); font-weight: 700; }
 
-/* Buttons */
 .m3-btn-filled {
     background-color: var(--md-sys-color-primary);
     color: var(--md-sys-color-on-primary);
@@ -146,9 +144,7 @@ h3 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacin
     display: flex; justify-content: space-between;
     padding: 12px 0; border-bottom: 1px solid #EEE;
 }
-
 .m3-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-
 .bulletin-item {
     background: #FFFFFF;
     color: #333;
@@ -163,6 +159,17 @@ h3 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacin
 .view { display: none; }
 .view.active { display: block; }
 
+/* QR Code Box */
+.qr-box {
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    margin: 0 auto 16px auto;
+    width: fit-content;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.qr-box img { display: block; } /* Fix alignment */
+
 /* URL BOX */
 .url-box {
     display: flex; background: rgba(0,0,0,0.1);
@@ -172,8 +179,7 @@ h3 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacin
 .url-box input {
     flex-grow: 1; border: none; background: transparent;
     font-family: monospace; font-size: 13px; padding: 8px; 
-    color: inherit;
-    min-width: 0; /* Fix flex overflow */
+    color: inherit; min-width: 0;
 }
 .url-box .m3-btn-icon { color: inherit; width: 36px; height: 36px; }
 

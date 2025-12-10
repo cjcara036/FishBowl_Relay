@@ -10,47 +10,18 @@ window.addEventListener('load', () => {
     inputName.addEventListener("keypress", handleEnterKey);
     inputCount.addEventListener("keypress", handleEnterKey);
 
-    // 1. Get the Hash (Ignore query params like ?fbclid=...)
     const hash = window.location.hash.substring(1); 
-    
     if (hash) {
-        let parsedData = null;
-
-        // STRATEGY A: Try LZString Compression (New Format)
         try {
-            const decompressed = LZString.decompressFromEncodedURIComponent(hash);
-            if (decompressed) {
-                // Critical Check: Is the result actually valid JSON?
-                parsedData = JSON.parse(decompressed);
-                console.log("Loaded via Compression Strategy");
-            }
-        } catch (e) {
-            console.log("Compression strategy failed, trying Legacy...");
-        }
-
-        // STRATEGY B: Try Standard Base64 (Old Format / Legacy)
-        if (!parsedData) {
-            try {
-                // sanitize: decode URI components first (e.g. %3D becomes =)
-                const cleanHash = decodeURIComponent(hash);
-                const decoded = atob(cleanHash);
-                parsedData = JSON.parse(decoded);
-                console.log("Loaded via Legacy Base64 Strategy");
-            } catch (e) {
-                console.error("Legacy strategy failed", e);
-            }
-        }
-
-        // FINAL RESULT
-        if (parsedData) {
-            currentState = parsedData;
+            const jsonStr = LZString.decompressFromEncodedURIComponent(hash);
+            if (!jsonStr) throw new Error("Decompression failed");
+            currentState = JSON.parse(jsonStr);
             startBowlMode();
-        } else {
-            alert("This link seems broken or invalid. Sending you to setup.");
-            console.error("All parsing strategies failed.");
+        } catch (e) {
+            console.error(e);
+            alert("Invalid link. Sending you to setup.");
             viewSetup.classList.add('active');
         }
-
     } else {
         viewSetup.classList.add('active');
         inputName.focus();
@@ -123,13 +94,12 @@ function renderBulletinBoard() {
     const gameOverCard = document.getElementById('game-over-card');
     const resultCard = document.getElementById('result-card');
 
-    // Only make decisions about Game Over/Draw cards if the Result card is NOT active.
     if (resultCard.classList.contains('hidden')) {
         if(remaining === 0) {
             drawCard.classList.add('hidden');
             gameOverCard.classList.remove('hidden');
             
-            // Generate final link for the Game Over card
+            // Generate final link
             document.getElementById('final-link-input').value = generateCurrentLink();
         } else {
             drawCard.classList.remove('hidden');
@@ -156,10 +126,14 @@ function drawItem() {
     // 1. UPDATE STATE
     currentState.items[pickedIndex].d = userName;
     
-    // 2. SHOW RESULT CARD *BEFORE* RENDERING BOARD
+    // 2. SHOW RESULT CARD
     const resultCard = document.getElementById('result-card');
     const drawCard = document.getElementById('draw-card');
     
+    // Hide QR code from previous turn if open
+    document.getElementById('qr-result-container').innerHTML = ''; 
+    document.getElementById('qr-result-container').classList.add('hidden');
+
     drawCard.classList.add('hidden');
     resultCard.classList.remove('hidden');
     document.getElementById('result-text').textContent = currentState.items[pickedIndex].n;
@@ -177,7 +151,7 @@ function drawItem() {
     // 4. GENERATE LINK
     document.getElementById('next-link-input').value = generateCurrentLink();
 
-    // 5. UPDATE BACKGROUND BOARD
+    // 5. UPDATE BOARD
     renderBulletinBoard();
 }
 
@@ -185,7 +159,6 @@ function drawItem() {
 
 function generateCurrentLink() {
     const jsonStr = JSON.stringify(currentState);
-    // ALWAYS compress new links to save space
     const compressed = LZString.compressToEncodedURIComponent(jsonStr);
     return `${window.location.origin}${window.location.pathname}#${compressed}`;
 }
@@ -209,6 +182,28 @@ function nativeShare(elementId) {
         }).catch((error) => console.log('Sharing failed', error));
     } else {
         copyLink(elementId);
+    }
+}
+
+function toggleQR(inputId, containerId) {
+    const container = document.getElementById(containerId);
+    const url = document.getElementById(inputId).value;
+    
+    if (container.classList.contains('hidden')) {
+        // Show QR
+        container.innerHTML = ''; // Clear previous
+        new QRCode(container, {
+            text: url,
+            width: 180,
+            height: 180,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.L
+        });
+        container.classList.remove('hidden');
+    } else {
+        // Hide QR
+        container.classList.add('hidden');
     }
 }
 

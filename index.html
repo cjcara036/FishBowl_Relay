@@ -7,7 +7,9 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <link rel="stylesheet" href="style.css">
 </head>
@@ -74,16 +76,21 @@
                 <div class="m3-divider"></div>
                 
                 <p id="result-instruction" style="font-size: 0.9rem;">
-                    <strong>IMPORTANT:</strong> Copy this NEW link for the next person:
+                    <strong>IMPORTANT:</strong> Share this NEW link:
                 </p>
                 
+                <div id="qr-result-container" class="qr-box hidden"></div>
+
                 <div class="url-box">
                     <input type="text" id="next-link-input" readonly>
-                    <button class="m3-btn-icon" onclick="copyLink('next-link-input')">
+                    <button class="m3-btn-icon" onclick="copyLink('next-link-input')" title="Copy Link">
                         <span class="material-symbols-outlined">content_copy</span>
                     </button>
-                    <button class="m3-btn-icon" onclick="nativeShare('next-link-input')">
+                    <button class="m3-btn-icon" onclick="nativeShare('next-link-input')" title="Share">
                         <span class="material-symbols-outlined">share</span>
+                    </button>
+                    <button class="m3-btn-icon" onclick="toggleQR('next-link-input', 'qr-result-container')" title="Show QR Code">
+                        <span class="material-symbols-outlined">qr_code_2</span>
                     </button>
                 </div>
             </div>
@@ -94,13 +101,19 @@
                 <p>The bowl is empty.</p>
                 <div class="m3-divider"></div>
                 <p style="font-size: 0.9rem; font-weight: 600;">Share the Final Tally:</p>
+                
+                <div id="qr-final-container" class="qr-box hidden"></div>
+
                 <div class="url-box">
                     <input type="text" id="final-link-input" readonly>
-                    <button class="m3-btn-icon" onclick="copyLink('final-link-input')">
+                    <button class="m3-btn-icon" onclick="copyLink('final-link-input')" title="Copy Link">
                         <span class="material-symbols-outlined">content_copy</span>
                     </button>
-                    <button class="m3-btn-icon" onclick="nativeShare('final-link-input')">
+                    <button class="m3-btn-icon" onclick="nativeShare('final-link-input')" title="Share">
                         <span class="material-symbols-outlined">share</span>
+                    </button>
+                    <button class="m3-btn-icon" onclick="toggleQR('final-link-input', 'qr-final-container')" title="Show QR Code">
+                        <span class="material-symbols-outlined">qr_code_2</span>
                     </button>
                 </div>
                 <br>
