@@ -13,13 +13,29 @@ window.addEventListener('load', () => {
     const hash = window.location.hash.substring(1); 
     if (hash) {
         try {
-            const jsonStr = LZString.decompressFromEncodedURIComponent(hash);
-            if (!jsonStr) throw new Error("Decompression failed");
+            let jsonStr = null;
+
+            // 1. Try Decompressing (New Format)
+            const decompressed = LZString.decompressFromEncodedURIComponent(hash);
+            
+            if (decompressed) {
+                jsonStr = decompressed;
+                console.log("Loaded compressed link.");
+            } else {
+                // 2. Fallback: Try standard Base64 (Old Format)
+                // If this fails, it throws an error which goes to catch block
+                jsonStr = atob(hash);
+                console.log("Loaded legacy Base64 link.");
+            }
+
+            if (!jsonStr) throw new Error("Empty data");
+
             currentState = JSON.parse(jsonStr);
             startBowlMode();
+
         } catch (e) {
-            console.error(e);
-            alert("Invalid link. Sending you to setup.");
+            console.error("Link parsing failed:", e);
+            alert("This link seems broken or invalid. Sending you to setup.");
             viewSetup.classList.add('active');
         }
     } else {
@@ -95,7 +111,6 @@ function renderBulletinBoard() {
     const resultCard = document.getElementById('result-card');
 
     // Only make decisions about Game Over/Draw cards if the Result card is NOT active.
-    // This prevents the Game Over card from flashing underneath the result card on the last draw.
     if (resultCard.classList.contains('hidden')) {
         if(remaining === 0) {
             drawCard.classList.add('hidden');
@@ -129,7 +144,6 @@ function drawItem() {
     currentState.items[pickedIndex].d = userName;
     
     // 2. SHOW RESULT CARD *BEFORE* RENDERING BOARD
-    // This ensures renderBulletinBoard sees the result card is active and doesn't trigger "Game Over"
     const resultCard = document.getElementById('result-card');
     const drawCard = document.getElementById('draw-card');
     
@@ -138,7 +152,6 @@ function drawItem() {
     document.getElementById('result-text').textContent = currentState.items[pickedIndex].n;
 
     // 3. CHECK FOR FINAL DRAW
-    // If this was the last item, update text to "Final Tally" instead of "Next Person"
     const remainingAfterDraw = availableIndices.length - 1;
     const instructionEl = document.getElementById('result-instruction');
     
@@ -159,6 +172,7 @@ function drawItem() {
 
 function generateCurrentLink() {
     const jsonStr = JSON.stringify(currentState);
+    // ALWAYS compress new links
     const compressed = LZString.compressToEncodedURIComponent(jsonStr);
     return `${window.location.origin}${window.location.pathname}#${compressed}`;
 }
